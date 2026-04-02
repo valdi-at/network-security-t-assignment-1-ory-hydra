@@ -1,0 +1,162 @@
+services:
+  kratos-migrate:
+    image: oryd/kratos:v1.1.0
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./config
+        target: /etc/config/kratos
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+  
+  kratos-selfservice-ui-node:
+    image: oryd/kratos-selfservice-ui-node:v1.1.0
+    ports:
+      - "4455:4455"
+    environment:
+      - PORT=4455
+      - HYDRA_ADMIN_URL=http://hydra:4445
+      - KRATOS_PUBLIC_URL=http://kratos:4433
+      - KRATOS_BROWSER_URL=http://localhost:4433
+      - COOKIE_SECRET=${KRATOS_MIGRATE_COOKIE_SECRET}
+      - CSRF_COOKIE_NAME=cookie_name
+      - CSRF_COOKIE_SECRET=${KRATOS_MIGRATE_CSRF_COOKIE_SECRET}
+      - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true
+    restart: on-failure
+  
+  kratos:
+    depends_on:
+      - kratos-migrate
+    image: oryd/kratos:v1.1.0
+    ports:
+      - '4433:4433' # public
+      - '4434:4434' # admin
+    restart: unless-stopped
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+
+      - SERVE_PUBLIC_BASE_URL=http://localhost:4433
+      - SERVE_PUBLIC_CORS_ENABLED=true
+      - SERVE_ADMIN_BASE_URL=http://localhost:4434
+
+      - SELFSERVICE_DEFAULT_BROWSER_RETURN_URL=http://localhost:4455/
+      - SELFSERVICE_ALLOWED_RETURN_URLS=http://localhost:4455
+
+      - SELFSERVICE_METHODS_PASSWORD_ENABLED=true
+      - SELFSERVICE_METHODS_PASSWORD_CONFIG_MIN_PASSWORD_LENGTH=6
+      - SELFSERVICE_METHODS_PASSWORD_CONFIG_IDENTIFIER_SIMILARITY_CHECK_ENABLED=false
+      - SELFSERVICE_METHODS_PASSWORD_CONFIG_HAVEIBEENPWNED_ENABLED=false
+
+      - SELFSERVICE_FLOWS_ERROR_UI_URL=http://localhost:4455/error
+
+      - SELFSERVICE_FLOWS_SETTINGS_UI_URL=http://localhost:4455/settings
+      - SELFSERVICE_FLOWS_SETTINGS_PRIVILEGED_SESSION_MAX_AGE=15m
+      - SELFSERVICE_FLOWS_SETTINGS_REQUIRED_AAL=highest_available
+
+      - SELFSERVICE_FLOWS_LOGOUT_AFTER_DEFAULT_BROWSER_RETURN_URL=http://localhost:4455/home
+
+      - SELFSERVICE_FLOWS_LOGIN_UI_URL=http://localhost:4455/login
+
+      - SELFSERVICE_FLOWS_REGISTRATION_UI_URL=http://localhost:4455/registration
+      - SELFSERVICE_FLOWS_REGISTRATION_AFTER_PASSWORD_HOOKS_0_HOOK=session
+
+      - LOG_LEVEL=trace
+      - LOG_FORMAT=text
+      - LOG_LEAK_SENSITIVE_VALUES=true
+
+      - SECRETS_COOKIE=${KRATOS_SECRETS_COOKIE}
+      - SECRETS_CIPHER=${KRATOS_SECRETS_CIPHER}
+
+      - IDENTITY_DEFAULT_SCHEMA_ID=default
+      - IDENTITY_SCHEMAS_0_ID=default
+      - IDENTITY_SCHEMAS_0_URL=file:///etc/config/kratos/identity.schema.json
+
+      - COURIER_SMTP_CONNECTION_URI=smtps://test:noreply@shinyshoe.net:1025/?skip_ssl_verify=true
+
+      - OAUTH2_PROVIDER_URL=http://hydra:4445
+    command: serve --dev --watch-courier
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./identity.schema.json
+        target: /etc/config/kratos/identity.schema.json
+  
+  hydra:
+    image: oryd/hydra:v2.2.0
+    ports:
+      - "4444:4444" # Public port
+      - "4445:4445" # Admin port
+      - "5555:5555" # Port for hydra token user
+    command: serve all --dev
+    volumes:
+      - type: volume
+        source: hydra-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      - SERVE_COOKIES_SAME_SITE_MODE=Lax
+
+      - URLS_SELF_ISSUER=http://localhost:4444
+      - URLS_CONSENT=http://localhost:4455/consent
+      - URLS_LOGIN=http://localhost:4455/login
+      - URLS_LOGOUT=http://localhost:4455/logout
+
+      - URLS_IDENTITY_PROVIDER_PUBLIC_URL=http://127.0.0.1:4433
+      - URLS_IDENTITY_PROVIDER_URL=http://127.0.0.1:4434
+
+      - SECRETS_SYSTEM=${HYDRA_SECRETS_SYSTEM}
+
+      - OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES=pairwise,public
+      - OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT=${HYDRA_OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT}
+
+      - LOG_LEAK_SENSITIVE_VALUES=true
+      - LOG_LEVEL=debug
+    restart: unless-stopped
+    depends_on:
+      - hydra-migrate
+  hydra-migrate:
+    image: oryd/hydra:v2.2.0
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+
+    command: migrate -c /etc/config/hydra/hydra.yml sql -e --yes
+    volumes:
+      - type: volume
+        source: hydra-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./config
+        target: /etc/config/hydra
+    restart: on-failure
+  app:
+    image: ghcr.io/valdi-at/network-security-t-assignment-1-app:master
+    container_name: app
+    depends_on:
+      - hydra
+      - kratos
+    ports:
+      - "3000:3000"
+    environment:
+      OIDC_NAME: ${OIDC_NAME}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OIDC_SCOPES: ${OIDC_SCOPES}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI}
+      OIDC_AUTH_URI: ${OIDC_AUTH_URI}
+      OIDC_TOKEN_URI: ${OIDC_TOKEN_URI}
+      OIDC_API_URI: ${OIDC_API_URI}
+      PORT: ${PORT}
+
+volumes:
+  hydra-sqlite:
+  kratos-sqlite:
