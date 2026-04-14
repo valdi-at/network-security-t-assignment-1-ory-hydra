@@ -63,7 +63,7 @@ services:
   hydra-migrate:
     networks:
       - yggdrasil
-  app:
+  app-ory:
     ports: !reset []
     labels:
       - "traefik.enable=true"

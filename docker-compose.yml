@@ -138,9 +138,9 @@ services:
         source: ./config
         target: /etc/config/hydra
     restart: on-failure
-  app:
+  app-ory:
     image: ghcr.io/valdi-at/network-security-t-assignment-1-app:master
-    container_name: app
+    container_name: app-ory
     depends_on:
       - hydra
       - kratos
