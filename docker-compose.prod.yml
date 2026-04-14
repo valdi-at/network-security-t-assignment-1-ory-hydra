@@ -17,46 +17,30 @@ services:
       - yggdrasil
 
   kratos:
-    ports: !reset []
+    ports:
+      - '4434:4434'
     labels:
       - "traefik.enable=true"
-      
       - "traefik.http.routers.opensmh-ory-kratos-public.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`)"
       - "traefik.http.routers.opensmh-ory-kratos-public.entrypoints=websecure"
       - "traefik.http.routers.opensmh-ory-kratos-public.service=opensmh-ory-kratos-public"
       - "traefik.http.routers.opensmh-ory-kratos-public.tls=true"
       - "traefik.http.routers.opensmh-ory-kratos-public.tls.certresolver=letsencrypt"
       - "traefik.http.services.opensmh-ory-kratos-public.loadbalancer.server.port=4433"
-
-      - "traefik.http.routers.opensmh-ory-kratos-admin.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`) && PathPrefix(`/admin`)"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.entrypoints=websecure"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.service=opensmh-ory-kratos-admin"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.tls=true"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.priority=50"
-      - "traefik.http.services.opensmh-ory-kratos-admin.loadbalancer.server.port=4434"
     networks:
       - yggdrasil
 
   hydra:
-    ports: !reset []
+    ports:
+      - "4445:4445"
     labels:
       - "traefik.enable=true"
-      
       - "traefik.http.routers.opensmh-ory-hydra.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`) && (PathPrefix(`/oauth2`) || PathPrefix(`/.well-known`) || PathPrefix(`/userinfo`))"
       - "traefik.http.routers.opensmh-ory-hydra.entrypoints=websecure"
       - "traefik.http.routers.opensmh-ory-hydra.service=opensmh-ory-hydra"
       - "traefik.http.routers.opensmh-ory-hydra.tls=true"
       - "traefik.http.routers.opensmh-ory-hydra.tls.certresolver=letsencrypt"
       - "traefik.http.services.opensmh-ory-hydra.loadbalancer.server.port=4444"
-      
-      - "traefik.http.routers.opensmh-ory-hydra-admin.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`) && PathPrefix(`/admin/oauth2`)"
-      - "traefik.http.routers.opensmh-ory-hydra-admin.entrypoints=websecure"
-      - "traefik.http.routers.opensmh-ory-hydra-admin.service=opensmh-ory-hydra-admin"
-      - "traefik.http.routers.opensmh-ory-hydra-admin.tls=true"
-      - "traefik.http.routers.opensmh-ory-hydra-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.opensmh-ory-hydra-admin.priority=100"
-      - "traefik.http.services.opensmh-ory-hydra-admin.loadbalancer.server.port=4445"
     networks:
       - yggdrasil
   
