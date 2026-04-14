@@ -1,0 +1,15 @@
+name: Webhook
+on:
+  push:
+    branches: "master"
+  pull_request:
+    branches: "master"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Portainer Stack Rebuild Webhook
+        run: |
+          curl --fail --show-error --silent -X POST "${{ secrets.PORTAINER_WEBHOOK }}"
