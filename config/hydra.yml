@@ -1,0 +1,31 @@
+
+serve:
+  cookies:
+    same_site_mode: Lax
+
+urls:
+  self:
+    issuer: http://auth.ory.shinyshoe.net:4444
+  consent: http://auth.ory.shinyshoe.net:4455/consent
+  login: http://auth.ory.shinyshoe.net:4455/login
+  logout: http://auth.ory.shinyshoe.net:4455/logout
+  identity_provider:
+    publicUrl: http://127.0.0.1:4433
+    url: http://127.0.0.1:4434
+
+
+secrets:
+  system:
+    - e15edf84556e34e32c4ca71c8a2a974af0d11980fdfc91b032e121fc5c8b4969
+
+oidc:
+  subject_identifiers:
+    supported_types:
+      - pairwise
+      - public
+    pairwise:
+      salt: b1ac99e1f26c13326b172717de6cfb02b53ffd52949e866cbf77c3af1dbc06e3
+
+log:
+  leak_sensitive_values: true
+  level: debug

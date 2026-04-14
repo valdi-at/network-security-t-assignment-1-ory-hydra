@@ -1,0 +1,70 @@
+version: v1.1.0
+
+dsn: memory
+
+serve:
+  public:
+    base_url: http://auth.ory.shinyshoe.net:4433
+    cors:
+      enabled: true
+  admin:
+    base_url: http://auth.ory.shinyshoe.net:4434
+
+selfservice:
+  default_browser_return_url: http://auth.ory.shinyshoe.net:4455/
+  allowed_return_urls:
+    - http://auth.ory.shinyshoe.net:4455
+
+  methods:
+    password:
+      enabled: true
+      config:
+        min_password_length: 6
+        identifier_similarity_check_enabled: false
+        haveibeenpwned_enabled: false
+
+  flows:
+    error:
+      ui_url: http://auth.ory.shinyshoe.net:4455/error
+
+    settings:
+      ui_url: http://auth.ory.shinyshoe.net:4455/settings
+      privileged_session_max_age: 15m
+      required_aal: highest_available
+
+    logout:
+      after:
+        default_browser_return_url: http://auth.ory.shinyshoe.net:4455/home
+
+    login:
+      ui_url: http://auth.ory.shinyshoe.net:4455/login
+
+    registration:
+      ui_url: http://auth.ory.shinyshoe.net:4455/registration
+      after:
+        password:
+          hooks:
+            - hook: session
+
+log:
+  format: text
+  leak_sensitive_values: true
+
+secrets:
+  cookie:
+    - 168b866fce5f518695d1b8652d772ebc10f7c690b72654d80b60a05c44cf8d46
+  cipher:
+    - 0ee9e5dbedac57db609c8230ec1ffc5e
+
+identity:
+  default_schema_id: default
+  schemas: 
+    - id: default
+      url: file:///etc/config/kratos/identity.schema.json
+
+courier:
+  smtp:
+    connection_uri: smtps://test:noreply@shinyshoe.net:1025/?skip_ssl_verify=true
+
+oauth2_provider:
+  url: http://hydra:4445 
