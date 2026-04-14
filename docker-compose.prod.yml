@@ -7,7 +7,7 @@ services:
     ports: !reset []
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.opensmh-ory-kratos-ui.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`) && (PathPrefix(`/login`) || PathPrefix(`/logout`) || PathPrefix(`/registration`) || PathPrefix(`/settings`) || PathPrefix(`/recovery`) || PathPrefix(`/verification`) || PathPrefix(`/error`) || PathPrefix(`/consent`))"
+      - "traefik.http.routers.opensmh-ory-kratos-ui.rule=Host(`auth.ory-hydra.opensmh.shinyshoe.net`) && (PathPrefix(`/assets`) || PathPrefix(`/login`) || PathPrefix(`/logout`) || PathPrefix(`/registration`) || PathPrefix(`/settings`) || PathPrefix(`/recovery`) || PathPrefix(`/verification`) || PathPrefix(`/error`) || PathPrefix(`/consent`))"
       - "traefik.http.routers.opensmh-ory-kratos-ui.entrypoints=websecure"
       - "traefik.http.routers.opensmh-ory-kratos-ui.service=opensmh-ory-kratos-ui"
       - "traefik.http.routers.opensmh-ory-kratos-ui.tls=true"
