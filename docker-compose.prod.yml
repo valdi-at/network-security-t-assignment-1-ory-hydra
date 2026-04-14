@@ -33,7 +33,7 @@ services:
       - "traefik.http.routers.opensmh-ory-kratos-admin.service=opensmh-ory-kratos-admin"
       - "traefik.http.routers.opensmh-ory-kratos-admin.tls=true"
       - "traefik.http.routers.opensmh-ory-kratos-admin.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.opensmh-ory-kratos-admin.priority=100"
+      - "traefik.http.routers.opensmh-ory-kratos-admin.priority=50"
       - "traefik.http.services.opensmh-ory-kratos-admin.loadbalancer.server.port=4434"
     networks:
       - yggdrasil
